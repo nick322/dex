@@ -4,6 +4,8 @@ package connector
 import (
 	"context"
 	"net/http"
+
+	"github.com/dexidp/dex/storage"
 )
 
 // Connector is a mechanism for federating login to a remote identity service.
@@ -106,5 +108,5 @@ type TokenIdentityConnector interface {
 
 // PayloadExtender allows connectors to enhance the payload before signing
 type PayloadExtender interface {
-	ExtendPayload(scopes []string, payload []byte, connectorData []byte) ([]byte, error)
+	ExtendPayload(scopes []string, claims storage.Claims, payload []byte, connectorData []byte) ([]byte, error)
 }
