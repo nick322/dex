@@ -398,38 +398,7 @@ func (c *googleConnector) ExtendPayload(scopes []string, claims storage.Claims, 
 
 	c.logger.Debugf("ExtendPayload called for user: %s", email)
 
-	// This is how to authenticate with Synology.
-	// First, login to get a session cookie, then use that cookie to get the user list.
-	//   if ! resp=$(curl --cookie-jar /tmp/jar --cookie /tmp/jar -sS 'https://famille.vls.dev/webapi/entry.cgi' \
-	//   	--data-urlencode api=SYNO.API.Auth \
-	//   	--data-urlencode method=login \
-	//   	--data-urlencode version=6 \
-	//   	--data-urlencode account=mael.valais \
-	//   	--data-urlencode passwd="$(lpass show -p famille.vls.dev)"); then
-	//   	echo "Error: curl failed: $resp"
-	//   	exit 1
-	//   fi
-	//   	if ! jq -e '.success' <<<"$resp" >/dev/null; then
-	//   	echo "Error: SYNO.API.Auth failed: $resp"
-	//   	exit 1
-	//   fi
-	//   	jq -r '.' <<<"$resp" >&2
-	//   	if ! resp=$(curl --cookie-jar /tmp/jar --cookie /tmp/jar -sS 'https://famille.vls.dev/webapi/entry.cgi' \
-	//   		--data-urlencode api=SYNO.Core.User \
-	//   		--data-urlencode method=list \
-	//   		--data-urlencode version=1 \
-	//   		--data-urlencode type=local \
-	//   		--data-urlencode offset=0 \
-	//   		--data-urlencode limit=-1 \
-	//   		--data-urlencode additional='["email","description","expired","2fa_status"]'); then
-	//   	echo "Error: curl failed: $resp"
-	//   	exit 1
-	//   fi
-	//   if ! jq -e '.success' <<<"$resp" >/dev/null; then
-	//   	echo "Error: SYNO.Core.User failed: $resp"
-	//   	exit 1
-	//   fi
-	//   jq -r '.' <<<"$resp" >&2
+	DMS_BASE_URL := os.Getenv("DMS_BASE_URL")
 
 	// First, get the session cookie
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
@@ -455,7 +424,8 @@ func (c *googleConnector) ExtendPayload(scopes []string, claims storage.Claims, 
 	form.Add("version", "6")
 	form.Add("account", user)
 	form.Add("passwd", passwd)
-	req, err := http.NewRequest("POST", "https://famille.vls.dev/webapi/entry.cgi", strings.NewReader(form.Encode()))
+	
+	req, err := http.NewRequest("POST", DMS_BASE_URL + "/webapi/entry.cgi", strings.NewReader(form.Encode()))
 	if err != nil {
 		return payload, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -480,7 +450,7 @@ func (c *googleConnector) ExtendPayload(scopes []string, claims storage.Claims, 
 	form.Add("offset", "0")
 	form.Add("limit", "-1")
 	form.Add("additional", `["email","description","expired","2fa_status"]`)
-	req, err = http.NewRequest("POST", "https://famille.vls.dev/webapi/entry.cgi", strings.NewReader(form.Encode()))
+	req, err = http.NewRequest("POST", DMS_BASE_URL + "/webapi/entry.cgi", strings.NewReader(form.Encode()))
 	if err != nil {
 		return payload, fmt.Errorf("failed to create request: %w", err)
 	}
